@@ -16,6 +16,8 @@ Aplicación web estática para organizar un partido fijo de **7 vs 7**, los mié
 - Modo oscuro y animación con sonido de bolillero.
 - Relator del Chiqui Mafia con 24 frases futboleras que rotan automáticamente.
 - Tipografía deportiva para títulos y tipografía de alta legibilidad para la interfaz.
+- Placa PNG vertical con equipos, cancha, suplentes, resultado y frase, lista para compartir.
+- Respaldo portátil en JSON que se puede compartir e importar en otro teléfono sin borrar fechas más nuevas.
 
 ## Carga de jugadores
 

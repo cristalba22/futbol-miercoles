@@ -87,6 +87,7 @@
         </div>
         <div class="compact-actions">
           <button id="shareBtn" class="ghost-button" type="button">Compartir</button>
+          <button id="imageBtn" class="ghost-button image-button" type="button">Crear placa</button>
           <button id="copyBtn" class="ghost-button whatsapp-button" type="button">Copiar para WhatsApp</button>
           <button id="redrawBtn" class="ghost-button" type="button">Sortear otra vez</button>
         </div>
@@ -131,11 +132,31 @@
           <span class="step">HISTORIAL</span>
           <h2 id="history-title">Las últimas fechas</h2>
         </div>
-        <button id="exportBtn" class="ghost-button" type="button">Exportar datos</button>
+        <div class="backup-actions">
+          <button id="shareBackupBtn" class="ghost-button" type="button">Compartir respaldo</button>
+          <button id="importBackupBtn" class="ghost-button" type="button">Importar respaldo</button>
+          <button id="exportBtn" class="ghost-button" type="button">Descargar JSON</button>
+          <input id="backupFileInput" type="file" accept="application/json,.json" hidden>
+        </div>
       </div>
+      <p class="backup-note">El respaldo incluye historial, plantel y cancha. Podés enviarlo por WhatsApp o guardarlo en Drive y restaurarlo en otro teléfono.</p>
       <div id="historyList" class="history-list"></div>
     </section>
   </main>
+
+  <div id="imagePreview" class="image-preview" role="dialog" aria-modal="true" aria-labelledby="imagePreviewTitle" hidden>
+    <div class="image-preview-card">
+      <div class="image-preview-head">
+        <div><span>LISTA PARA COMPARTIR</span><h2 id="imagePreviewTitle">Placa del partido</h2></div>
+        <button id="closeImageBtn" class="close-button" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <img id="matchImage" alt="Placa con los equipos sorteados">
+      <div class="image-preview-actions">
+        <button id="downloadImageBtn" class="secondary-button" type="button">Descargar PNG</button>
+        <button id="shareImageBtn" class="primary-button small" type="button">Compartir imagen</button>
+      </div>
+    </div>
+  </div>
 
   <div id="drawOverlay" class="draw-overlay" hidden aria-live="assertive">
     <div class="lottery-machine" aria-hidden="true">

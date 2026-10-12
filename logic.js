@@ -162,5 +162,17 @@
     return players.map(function (p, index) { return (index + 1) + '. ' + p.name + (p.role ? ' ' + p.role : '') + (p.absent ? ' AUS' : ''); }).join('\n');
   }
 
-  return { parseLine: parseLine, parsePlayers: parsePlayers, countByRole: countByRole, splitRoster: splitRoster, validateRoster: validateRoster, chooseTeams: chooseTeams, nextWednesdayISO: nextWednesdayISO, formatRoster: formatRoster };
+  function mergeHistories(existing, incoming) {
+    var byDate = {};
+    (existing || []).concat(incoming || []).forEach(function (record) {
+      if (!record || !/^\d{4}-\d{2}-\d{2}$/.test(record.date || '') || !Array.isArray(record.teamA) || !Array.isArray(record.teamB)) return;
+      var current = byDate[record.date];
+      var currentTime = current ? Date.parse(current.updatedAt || current.createdAt || 0) || 0 : -1;
+      var recordTime = Date.parse(record.updatedAt || record.createdAt || 0) || 0;
+      if (!current || recordTime >= currentTime) byDate[record.date] = record;
+    });
+    return Object.keys(byDate).sort().reverse().map(function (date) { return byDate[date]; });
+  }
+
+  return { parseLine: parseLine, parsePlayers: parsePlayers, countByRole: countByRole, splitRoster: splitRoster, validateRoster: validateRoster, chooseTeams: chooseTeams, nextWednesdayISO: nextWednesdayISO, formatRoster: formatRoster, mergeHistories: mergeHistories };
 });

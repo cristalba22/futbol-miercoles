@@ -73,4 +73,16 @@ test('calcula el próximo miércoles incluyendo hoy si corresponde', () => {
   assert.equal(logic.nextWednesdayISO(new Date(2026, 9, 14)), '2026-10-14');
 });
 
+test('fusiona respaldos por fecha conservando la versión más nueva', () => {
+  const base = [{ date: '2026-10-07', updatedAt: '2026-10-07T23:00:00Z', teamA: [], teamB: [], scoreA: 2 }];
+  const backup = [
+    { date: '2026-10-07', updatedAt: '2026-10-08T01:00:00Z', teamA: [], teamB: [], scoreA: 4 },
+    { date: '2026-10-14', updatedAt: '2026-10-15T01:00:00Z', teamA: [], teamB: [] }
+  ];
+  const merged = logic.mergeHistories(base, backup);
+  assert.equal(merged.length, 2);
+  assert.equal(merged[0].date, '2026-10-14');
+  assert.equal(merged[1].scoreA, 4);
+});
+
 console.log('\nTodas las pruebas pasaron.');
