@@ -237,6 +237,7 @@
 
   function renderHistory() {
     var history = loadHistory(), list = $('historyList'); list.innerHTML = ''; $('reuseBtn').hidden = history.length === 0;
+    ['shareHistoryBtn', 'historyJpgBtn', 'historyPdfBtn'].forEach(function (id) { $(id).disabled = history.length === 0; });
     if (!history.length) { list.innerHTML = '<div class="history-empty">Todavía no hay fechas guardadas. El primer sorteo va a aparecer acá.</div>'; return; }
     history.slice(0, 12).forEach(function (record) {
       var item = document.createElement('div'); item.className = 'history-item';
@@ -361,11 +362,11 @@
     ctx.fillStyle = '#dfff44'; ctx.font = '900 18px Manrope, sans-serif'; ctx.fillText('😎 FALLO DEL CHIQUI MAFIA', 85, contentY + 43);
     ctx.fillStyle = '#ffffff'; ctx.font = '700 24px Manrope, sans-serif'; wrapCanvasText(ctx, '“' + currentDraw.quote + '”', 85, contentY + 82, 890, 32, 2);
     ctx.fillStyle = 'rgba(255,255,255,.48)'; ctx.font = '700 17px Manrope, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('futbolmiercoles.vercel.app', 540, canvas.height - 48); ctx.textAlign = 'left';
-    return new Promise(function (resolve, reject) { canvas.toBlob(function (blob) { if (blob) resolve(blob); else reject(new Error('No se pudo generar la imagen.')); }, 'image/png', .95); });
+    return new Promise(function (resolve, reject) { canvas.toBlob(function (blob) { if (blob) resolve(blob); else reject(new Error('No se pudo generar la imagen.')); }, 'image/jpeg', .93); });
   }
 
   function downloadBlob(blob, filename) { var url = URL.createObjectURL(blob), link = document.createElement('a'); link.href = url; link.download = filename; link.click(); setTimeout(function () { URL.revokeObjectURL(url); }, 1000); }
-  function imageFilename() { return 'equipos-' + ($('matchDate').value || logic.nextWednesdayISO()) + '.png'; }
+  function imageFilename() { return 'equipos-' + ($('matchDate').value || logic.nextWednesdayISO()) + '.jpg'; }
   async function openImagePreview() {
     try {
       $('imageBtn').disabled = true; $('imageBtn').textContent = 'Generando…';
@@ -377,34 +378,96 @@
   function downloadImage() { if (lastImageBlob) { downloadBlob(lastImageBlob, imageFilename()); showToast('Placa descargada'); } }
   async function shareImage() {
     if (!lastImageBlob) return;
-    var file = new File([lastImageBlob], imageFilename(), { type: 'image/png' });
+    var file = new File([lastImageBlob], imageFilename(), { type: 'image/jpeg' });
     if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
       try { await navigator.share({ title: 'Equipos del miércoles', text: '⚽ Equipos confirmados', files: [file] }); } catch (error) { if (error.name !== 'AbortError') downloadImage(); }
     } else downloadImage();
   }
 
-  function backupPayload() { return { app: 'futbol-miercoles', version: 2, exportedAt: new Date().toISOString(), history: loadHistory(), roster: playersEl.value, venue: $('venue').value }; }
-  function backupBlob() { return new Blob([JSON.stringify(backupPayload(), null, 2)], { type: 'application/json' }); }
-  function backupFilename() { return 'respaldo-futbol-miercoles-' + new Date().toISOString().slice(0, 10) + '.json'; }
-  function exportData() {
-    downloadBlob(backupBlob(), backupFilename()); showToast('Respaldo descargado');
+  function historyFilename(extension) { return 'historial-futbol-miercoles-' + new Date().toISOString().slice(0, 10) + '.' + extension; }
+  function historyTeamLine(players) {
+    return normalisePlayers(players || []).map(function (player) { return player.name + (player.role ? ' (' + player.role + ')' : ''); }).join('  ·  ');
   }
-  async function shareBackup() {
-    var blob = backupBlob(), file = new File([blob], backupFilename(), { type: 'application/json' });
-    if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
-      try { await navigator.share({ title: 'Respaldo Fútbol de los Miércoles', text: 'Historial y plantel para restaurar en otro teléfono.', files: [file] }); }
-      catch (error) { if (error.name !== 'AbortError') exportData(); }
-    } else exportData();
+  function drawHistoryCard(ctx, record, y) {
+    roundedRect(ctx, 55, y, 1130, 300, 28); ctx.fillStyle = '#f5f7ef'; ctx.fill();
+    ctx.fillStyle = '#31523d'; ctx.font = '900 21px Manrope, sans-serif'; ctx.fillText(formatDate(record.date).toUpperCase(), 90, y + 48);
+    var played = record.status === 'played' && record.scoreA != null && record.scoreB != null;
+    roundedRect(ctx, 950, y + 25, 190, 40, 20); ctx.fillStyle = played ? '#dfff44' : '#e4e9df'; ctx.fill();
+    ctx.fillStyle = '#07180f'; ctx.font = '900 17px Manrope, sans-serif'; ctx.textAlign = 'center'; ctx.fillText(played ? 'RESULTADO FINAL' : 'PARTIDO PENDIENTE', 1045, y + 52); ctx.textAlign = 'left';
+    ctx.fillStyle = '#07180f'; ctx.font = '900 42px "Barlow Condensed", Impact, sans-serif';
+    ctx.fillText(played ? 'CLARO  ' + record.scoreA + '  —  ' + record.scoreB + '  OSCURO' : 'EQUIPO CLARO  VS  EQUIPO OSCURO', 90, y + 105);
+    ctx.fillStyle = '#607066'; ctx.font = '700 18px Manrope, sans-serif'; ctx.fillText(record.venue ? 'CANCHA  ·  ' + fitCanvasText(ctx, record.venue, 860) : 'CANCHA SIN INFORMAR', 90, y + 138);
+    ctx.fillStyle = '#31523d'; ctx.font = '900 17px Manrope, sans-serif'; ctx.fillText('EQUIPO CLARO', 90, y + 182);
+    ctx.fillStyle = '#07180f'; ctx.font = '700 18px Manrope, sans-serif'; wrapCanvasText(ctx, historyTeamLine(record.teamA), 90, y + 211, 1030, 25, 2);
+    ctx.fillStyle = '#31523d'; ctx.font = '900 17px Manrope, sans-serif'; ctx.fillText('EQUIPO OSCURO', 90, y + 260);
+    ctx.fillStyle = '#07180f'; ctx.font = '700 18px Manrope, sans-serif'; ctx.fillText(fitCanvasText(ctx, historyTeamLine(record.teamB), 1030), 90, y + 286);
   }
-  async function importBackup(file) {
-    if (!file || file.size > 5 * 1024 * 1024) throw new Error('El archivo no es un respaldo válido o es demasiado grande.');
-    var payload = JSON.parse(await file.text());
-    var importedHistory = Array.isArray(payload.history) ? payload.history : payload.matches;
-    if ((payload.app && payload.app !== 'futbol-miercoles') || !Array.isArray(importedHistory)) throw new Error('Ese archivo no pertenece a Fútbol de los Miércoles.');
-    var merged = logic.mergeHistories(loadHistory(), importedHistory); saveHistory(merged);
-    if (!playersEl.value.trim() && typeof payload.roster === 'string') playersEl.value = payload.roster;
-    if (!$('venue').value.trim() && typeof payload.venue === 'string') $('venue').value = payload.venue;
-    localStorage.setItem(ROSTER_KEY, playersEl.value); localStorage.setItem(VENUE_KEY, $('venue').value); renderRosterState(); renderHistory(); showToast('Respaldo restaurado: ' + merged.length + ' fechas disponibles');
+  function makeHistoryCanvas(records, fixedHeight, pageLabel) {
+    var canvas = document.createElement('canvas'); canvas.width = 1240; canvas.height = fixedHeight || (280 + records.length * 330);
+    var ctx = canvas.getContext('2d'), gradient = ctx.createLinearGradient(0, 0, 1240, canvas.height);
+    gradient.addColorStop(0, '#04321d'); gradient.addColorStop(1, '#071b10'); ctx.fillStyle = gradient; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = 'rgba(255,255,255,.09)'; ctx.lineWidth = 3; ctx.strokeRect(28, 28, 1184, canvas.height - 56);
+    ctx.fillStyle = '#dfff44'; ctx.font = '900 21px Manrope, sans-serif'; ctx.fillText('ARCHIVO DEL CHIQUI MAFIA', 55, 72);
+    ctx.fillStyle = '#ffffff'; ctx.font = '900 66px "Barlow Condensed", Impact, sans-serif'; ctx.fillText('HISTORIAL DE LOS MIÉRCOLES', 55, 145);
+    ctx.fillStyle = 'rgba(255,255,255,.66)'; ctx.font = '700 19px Manrope, sans-serif';
+    ctx.fillText(records.length + (records.length === 1 ? ' FECHA' : ' FECHAS') + '  ·  GENERADO ' + new Intl.DateTimeFormat('es-AR').format(new Date()), 55, 187);
+    if (pageLabel) { ctx.textAlign = 'right'; ctx.fillText(pageLabel, 1185, 187); ctx.textAlign = 'left'; }
+    records.forEach(function (record, index) { drawHistoryCard(ctx, record, 225 + index * 330); });
+    ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.font = '700 17px Manrope, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('futbolmiercoles.vercel.app', 620, canvas.height - 35); ctx.textAlign = 'left';
+    return canvas;
+  }
+  function canvasToBlob(canvas, type, quality) {
+    return new Promise(function (resolve, reject) { canvas.toBlob(function (blob) { if (blob) resolve(blob); else reject(new Error('No se pudo crear el archivo.')); }, type, quality); });
+  }
+  async function generateHistoryJpg() {
+    var history = loadHistory(); if (!history.length) throw new Error('Todavía no hay fechas guardadas.');
+    if (document.fonts && document.fonts.ready) await document.fonts.ready;
+    return canvasToBlob(makeHistoryCanvas(history.slice(0, 12)), 'image/jpeg', .92);
+  }
+  function concatBytes(chunks) {
+    var length = chunks.reduce(function (sum, chunk) { return sum + chunk.length; }, 0), result = new Uint8Array(length), offset = 0;
+    chunks.forEach(function (chunk) { result.set(chunk, offset); offset += chunk.length; }); return result;
+  }
+  async function makePdfBlob(canvases) {
+    var encoder = new TextEncoder(), images = [];
+    for (var i = 0; i < canvases.length; i++) images.push(new Uint8Array(await (await canvasToBlob(canvases[i], 'image/jpeg', .88)).arrayBuffer()));
+    var objectCount = 2 + canvases.length * 3, objects = new Array(objectCount + 1);
+    objects[1] = encoder.encode('<< /Type /Catalog /Pages 2 0 R >>');
+    var kids = [];
+    canvases.forEach(function (_, index) { kids.push((3 + index * 3) + ' 0 R'); });
+    objects[2] = encoder.encode('<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + canvases.length + ' >>');
+    canvases.forEach(function (canvas, index) {
+      var pageId = 3 + index * 3, imageId = pageId + 1, contentId = pageId + 2;
+      objects[pageId] = encoder.encode('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /XObject << /Im0 ' + imageId + ' 0 R >> >> /Contents ' + contentId + ' 0 R >>');
+      objects[imageId] = concatBytes([encoder.encode('<< /Type /XObject /Subtype /Image /Width ' + canvas.width + ' /Height ' + canvas.height + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + images[index].length + ' >>\nstream\n'), images[index], encoder.encode('\nendstream')]);
+      var content = encoder.encode('q\n595 0 0 842 0 0 cm\n/Im0 Do\nQ');
+      objects[contentId] = concatBytes([encoder.encode('<< /Length ' + content.length + ' >>\nstream\n'), content, encoder.encode('\nendstream')]);
+    });
+    var header = encoder.encode('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n'), chunks = [header], offsets = new Array(objectCount + 1).fill(0), cursor = header.length;
+    for (var id = 1; id <= objectCount; id++) { var wrapped = concatBytes([encoder.encode(id + ' 0 obj\n'), objects[id], encoder.encode('\nendobj\n')]); offsets[id] = cursor; chunks.push(wrapped); cursor += wrapped.length; }
+    var xrefOffset = cursor, xref = 'xref\n0 ' + (objectCount + 1) + '\n0000000000 65535 f \n';
+    for (var n = 1; n <= objectCount; n++) xref += String(offsets[n]).padStart(10, '0') + ' 00000 n \n';
+    xref += 'trailer\n<< /Size ' + (objectCount + 1) + ' /Root 1 0 R >>\nstartxref\n' + xrefOffset + '\n%%EOF'; chunks.push(encoder.encode(xref));
+    return new Blob([concatBytes(chunks)], { type: 'application/pdf' });
+  }
+  async function downloadHistoryJpg() {
+    try { downloadBlob(await generateHistoryJpg(), historyFilename('jpg')); showToast('Historial JPG descargado'); } catch (error) { showToast(error.message); }
+  }
+  async function downloadHistoryPdf() {
+    try {
+      var history = loadHistory(); if (!history.length) throw new Error('Todavía no hay fechas guardadas.');
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      var pages = [], total = Math.ceil(history.length / 4);
+      for (var i = 0; i < total; i++) pages.push(makeHistoryCanvas(history.slice(i * 4, i * 4 + 4), 1754, 'PÁGINA ' + (i + 1) + ' DE ' + total));
+      downloadBlob(await makePdfBlob(pages), historyFilename('pdf')); showToast('Historial PDF descargado');
+    } catch (error) { showToast(error.message); }
+  }
+  async function shareHistory() {
+    try {
+      var blob = await generateHistoryJpg(), file = new File([blob], historyFilename('jpg'), { type: 'image/jpeg' });
+      if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) await navigator.share({ title: 'Historial Fútbol de los Miércoles', text: '⚽ Historial de las fechas', files: [file] });
+      else { downloadBlob(blob, historyFilename('jpg')); showToast('Historial JPG descargado'); }
+    } catch (error) { if (error.name !== 'AbortError') showToast(error.message); }
   }
   function showToast(message) { var toast = $('toast'); toast.textContent = message; toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2200); }
 
@@ -415,9 +478,8 @@
   drawBtn.addEventListener('click', runDraw); $('redrawBtn').addEventListener('click', runDraw); $('copyBtn').addEventListener('click', copyDraw); $('shareBtn').addEventListener('click', shareDraw); $('imageBtn').addEventListener('click', openImagePreview);
   $('closeImageBtn').addEventListener('click', closeImagePreview); $('downloadImageBtn').addEventListener('click', downloadImage); $('shareImageBtn').addEventListener('click', shareImage);
   $('imagePreview').addEventListener('click', function (event) { if (event.target === $('imagePreview')) closeImagePreview(); });
-  $('saveDrawBtn').addEventListener('click', saveDraw); $('saveResultBtn').addEventListener('click', saveResult); $('reuseBtn').addEventListener('click', reuseRoster); $('exportBtn').addEventListener('click', exportData); $('shareBackupBtn').addEventListener('click', shareBackup);
-  $('importBackupBtn').addEventListener('click', function () { $('backupFileInput').click(); });
-  $('backupFileInput').addEventListener('change', function () { var file = this.files && this.files[0]; if (!file) return; importBackup(file).catch(function (error) { showToast(error.message); }); this.value = ''; });
+  $('saveDrawBtn').addEventListener('click', saveDraw); $('saveResultBtn').addEventListener('click', saveResult); $('reuseBtn').addEventListener('click', reuseRoster);
+  $('shareHistoryBtn').addEventListener('click', shareHistory); $('historyJpgBtn').addEventListener('click', downloadHistoryJpg); $('historyPdfBtn').addEventListener('click', downloadHistoryPdf);
   $('clearBtn').addEventListener('click', function () { playersEl.value = ''; resultSection.hidden = true; renderRosterState(); playersEl.focus(); });
   $('themeToggle').addEventListener('click', function () { document.body.classList.toggle('dark-mode'); localStorage.setItem(THEME_KEY, document.body.classList.contains('dark-mode') ? 'dark' : 'light'); updateThemeButton(); });
   $('soundToggle').addEventListener('click', function () { soundOn = !soundOn; localStorage.setItem(SOUND_KEY, soundOn ? 'on' : 'off'); updateSoundButton(); });

@@ -11,13 +11,13 @@ Aplicación web estática para organizar un partido fijo de **7 vs 7**, los mié
 - Los primeros 14 son titulares y el resto queda como suplente.
 - Evita repetir los mismos compañeros de las fechas recientes.
 - Guardado separado del sorteo y del resultado final.
-- Historial local, recuperación del último plantel y exportación JSON.
+- Historial local y recuperación del último plantel.
 - Texto listo para WhatsApp con cancha, equipos, suplentes y frase del Chiqui Mafia.
 - Modo oscuro y animación con sonido de bolillero.
 - Relator del Chiqui Mafia con 24 frases futboleras que rotan automáticamente.
 - Tipografía deportiva para títulos y tipografía de alta legibilidad para la interfaz.
-- Placa PNG vertical con equipos, cancha, suplentes, resultado y frase, lista para compartir.
-- Respaldo portátil en JSON que se puede compartir e importar en otro teléfono sin borrar fechas más nuevas.
+- Placa JPG vertical con equipos, cancha, suplentes, resultado y frase, lista para compartir.
+- Historial visual completo para compartir o descargar en JPG y PDF.
 
 ## Carga de jugadores
 
