@@ -17,7 +17,7 @@
   var validationBox = $('validationBox');
   var resultSection = $('resultSection');
 
-  var PRESIDENT_QUOTES = [
+  var CHIQUI_QUOTES = [
     'Ojo con el Equipo {team}: tiene más humo que vestuario en invierno.',
     'El sorteo habló. Ahora falta que hablen adentro de la cancha.',
     'Mucho nombre, mucha promesa… veremos quién corre cuando van perdiendo.',
@@ -44,7 +44,7 @@
     'El 2–0 es el resultado más peligroso, sobre todo si vas perdiendo.',
     'Hoy hay promesa de buen fútbol. La promesa no está certificada.',
     'Sin suplentes no hay cansancio: hay estrategia de ahorro.',
-    'El Presidente recuerda: caño vale doble solamente en la memoria.',
+    'El Chiqui Mafia recuerda: caño vale doble solamente en la memoria.',
     'Se ruega no gastar todos los goles en la entrada en calor.',
     'El que dice “una más y voy” ya perdió la marca.',
     'Puntualidad inglesa, definición argentina.',
@@ -137,8 +137,8 @@
     element.append(kicker, title, list, footer);
   }
 
-  function makePresidentQuote() {
-    var template = PRESIDENT_QUOTES[Math.floor(Math.random() * PRESIDENT_QUOTES.length)];
+  function makeChiquiQuote() {
+    var template = CHIQUI_QUOTES[Math.floor(Math.random() * CHIQUI_QUOTES.length)];
     return template.replace('{team}', Math.random() < .5 ? 'Claro' : 'Oscuro');
   }
 
@@ -156,14 +156,14 @@
   }
 
   function renderDraw(draw, shouldScroll) {
-    currentDraw = { teamA: normalisePlayers(draw.teamA), teamB: normalisePlayers(draw.teamB), substitutes: normalisePlayers(draw.substitutes || []), venue: draw.venue || $('venue').value.trim(), quote: draw.quote || makePresidentQuote() };
+    currentDraw = { teamA: normalisePlayers(draw.teamA), teamB: normalisePlayers(draw.teamB), substitutes: normalisePlayers(draw.substitutes || []), venue: draw.venue || $('venue').value.trim(), quote: draw.quote || makeChiquiQuote() };
     renderTeam($('teamA'), currentDraw.teamA, 'A'); renderTeam($('teamB'), currentDraw.teamB, 'B');
     var a = logic.countByRole(currentDraw.teamA), b = logic.countByRole(currentDraw.teamB);
     var details = [];
     if (a.ARQ || b.ARQ) details.push(a.ARQ + '–' + b.ARQ + ' arqueros');
     if (a.DEF || b.DEF) details.push(a.DEF + '–' + b.DEF + ' defensores');
     $('balanceText').textContent = details.length ? 'Roles repartidos: ' + details.join(' · ') + '.' : 'Sorteo libre, sin puestos fijos.';
-    $('presidentQuote').textContent = '“' + currentDraw.quote + '”';
+    $('chiquiQuote').textContent = '“' + currentDraw.quote + '”';
     $('matchDate').value = logic.nextWednesdayISO(); $('scoreA').value = ''; $('scoreB').value = ''; $('saveStatus').textContent = '';
     resultSection.hidden = false;
     if (shouldScroll) resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -188,7 +188,7 @@
     if (!state.validation.valid) { renderRosterState(); showToast('Faltan jugadores para completar el 7 vs 7.'); return; }
     drawBtn.disabled = true; resultSection.hidden = true;
     var overlay = $('drawOverlay'); overlay.hidden = false; playLotterySound();
-    var phases = ['El Presidente está mezclando...', 'Repartiendo las camisetas...', 'Midiendo el humo...', 'Cerrando el sorteo...'];
+    var phases = ['El Chiqui Mafia mueve los hilos...', 'Repartiendo las camisetas...', 'Midiendo el humo...', 'Cerrando el sorteo...'];
     var phase = 0; $('drawPhase').textContent = phases[0];
     var interval = setInterval(function () { phase = (phase + 1) % phases.length; $('drawPhase').textContent = phases[phase]; }, 380);
     var shortMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -274,7 +274,7 @@
     lines.push('', '*⚫ EQUIPO OSCURO*'); currentDraw.teamB.forEach(function (p, i) { lines.push(playerLine(p, i)); });
     if (currentDraw.substitutes.length) { lines.push('', '*🟡 SUPLENTES*'); currentDraw.substitutes.forEach(function (p, i) { lines.push(playerLine(p, i)); }); }
     if ($('scoreA').value !== '' && $('scoreB').value !== '') lines.push('', '*RESULTADO:* ' + $('scoreA').value + ' — ' + $('scoreB').value);
-    lines.push('', '_👑 El Presidente:_ “' + currentDraw.quote + '”');
+    lines.push('', '_😎 El Chiqui Mafia:_ “' + currentDraw.quote + '”');
     return lines.join('\n');
   }
 

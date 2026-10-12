@@ -12,9 +12,9 @@ Aplicación web estática para organizar un partido fijo de **7 vs 7**, los mié
 - Evita repetir los mismos compañeros de las fechas recientes.
 - Guardado separado del sorteo y del resultado final.
 - Historial local, recuperación del último plantel y exportación JSON.
-- Texto listo para WhatsApp con cancha, equipos, suplentes y frase del Presidente.
+- Texto listo para WhatsApp con cancha, equipos, suplentes y frase del Chiqui Mafia.
 - Modo oscuro y animación con sonido de bolillero.
-- Relator del Presidente con 24 frases futboleras que rotan automáticamente.
+- Relator del Chiqui Mafia con 24 frases futboleras que rotan automáticamente.
 - Tipografía deportiva para títulos y tipografía de alta legibilidad para la interfaz.
 
 ## Carga de jugadores
